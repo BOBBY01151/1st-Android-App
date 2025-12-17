@@ -22,12 +22,13 @@
         
         #vehicleDisplay {
             position: fixed;
+            /* FIXED POSITION - LEFT SIDE OF SCREEN */
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
             opacity: 0;
             transition: opacity 0.3s ease;
             pointer-events: none;
-            transform-origin: center center;
-            /* Remove any transition on transform/left/top for instant positioning */
-            will-change: transform, left, top;
         }
         
         #vehicleDisplay.show {
@@ -55,7 +56,6 @@
                 0 3px 0 #000,
                 /* Drop shadow for depth */
                 0 4px 6px rgba(0, 0, 0, 0.7);
-            transform-origin: bottom center;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
@@ -63,22 +63,22 @@
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: scale(0.9);
+                transform: translateY(-50%) translateX(-20px);
             }
             to {
                 opacity: 1;
-                transform: scale(1);
+                transform: translateY(-50%) translateX(0);
             }
         }
         
         @keyframes fadeOut {
             from {
                 opacity: 1;
-                transform: scale(1);
+                transform: translateY(-50%) translateX(0);
             }
             to {
                 opacity: 0;
-                transform: scale(0.9);
+                transform: translateY(-50%) translateX(-20px);
             }
         }
         
@@ -119,11 +119,9 @@
             vehicleDisplay.classList.add('fade-out');
         }
         
+        // Keep this function for compatibility but position is now fixed in CSS
         function updatePosition(x, y, scale) {
-            // Direct positioning - text follows vehicle in 3D space
-            vehicleDisplay.style.left = `${x * 100}%`;
-            vehicleDisplay.style.top = `${y * 100}%`;
-            vehicleDisplay.style.transform = `translate(-50%, -50%) scale(${scale || 1})`;
+            // Position is fixed - no need to update
         }
     </script>
 </body>

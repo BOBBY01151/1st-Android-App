@@ -65,98 +65,6 @@ function getVehicleInfo(vehicle) {
     return null;
 }
 
-function getVehicleTextPosition(vehicle) {
-    if (!vehicle || !vehicle.handle) return null;
-    
-    try {
-        const vehiclePos = vehicle.getPosition();
-        const heading = vehicle.getHeading();
-        const headingRad = (heading * Math.PI) / 180;
-        
-        // Calculate position on LEFT side of vehicle (fixed offset)
-        const leftOffset = 2.5; // Distance to left side
-        const heightOffset = 1.2; // Height above ground
-        const forwardOffset = 0.0; // Forward offset (0 = centered)
-        
-        const cosHeading = Math.cos(headingRad);
-        const sinHeading = Math.sin(headingRad);
-        
-        // LEFT side vector: perpendicular to forward, pointing LEFT
-        // Forward = (sin(heading), cos(heading))
-        // Left = (-cos(heading), sin(heading))
-        const leftX = -cosHeading;
-        const leftY = sinHeading;
-        
-        // Forward vector
-        const forwardX = sinHeading;
-        const forwardY = cosHeading;
-        
-        const textWorldPos = {
-            x: vehiclePos.x + leftX * leftOffset + forwardX * forwardOffset,
-            y: vehiclePos.y + leftY * leftOffset + forwardY * forwardOffset,
-            z: vehiclePos.z + heightOffset
-        };
-        
-        return textWorldPos;
-    } catch (e) {
-        return null;
-    }
-}
-
-function updateBrowserPosition(worldPos) {
-    if (!browser || !activeVehicleDisplay) return;
-    
-    try {
-        // Convert 3D world position to screen coordinates - directly attached to vehicle
-        const screenPos = mp.game.graphics.world3dToScreen2d(worldPos.x, worldPos.y, worldPos.z);
-        
-        // If conversion fails or position is off-screen, hide the display
-        if (!screenPos || (screenPos.x === 0 && screenPos.y === 0)) {
-            browser.active = false;
-            return;
-        }
-        
-        // Check if position is visible on screen (with some margin)
-        if (screenPos.x < -0.1 || screenPos.x > 1.1 || screenPos.y < -0.1 || screenPos.y > 1.1) {
-            browser.active = false;
-            return;
-        }
-        
-        // Calculate distance for scale
-        let camPos;
-        try {
-            camPos = mp.game.cam.getGameplayCamCoord();
-        } catch {
-            camPos = mp.players.local.getPosition();
-        }
-        
-        const distance = Math.sqrt(
-            Math.pow(worldPos.x - camPos.x, 2) +
-            Math.pow(worldPos.y - camPos.y, 2) +
-            Math.pow(worldPos.z - camPos.z, 2)
-        );
-        
-        // Hide if too far away
-        if (distance > 50) {
-            browser.active = false;
-            return;
-        }
-        
-        // Calculate scale based on distance (closer = bigger, farther = smaller)
-        const scale = Math.max(0.7, Math.min(1.3, 12 / Math.max(distance, 5)));
-        
-        // Update browser with the direct screen position - no smoothing
-        // This makes it truly attached to the vehicle's 3D position
-        browser.active = true;
-        const posX = screenPos.x.toFixed(4);
-        const posY = screenPos.y.toFixed(4);
-        const scaleStr = scale.toFixed(2);
-        browser.execute(`updatePosition(${posX}, ${posY}, ${scaleStr});`);
-    } catch (e) {
-        browser.active = false;
-    }
-}
-
 function startVehicleDisplay(vehicle, seat) {
     if (displayTimer) {
         clearTimeout(displayTimer);
@@ -240,16 +148,10 @@ mp.events.add('render', () => {
         return;
     }
 
-    // Calculate 3D world position on LEFT side of vehicle (attached to vehicle)
-    const textWorldPos = getVehicleTextPosition(vehicle);
-    if (!textWorldPos) {
-        if (browser) browser.active = false;
-        return;
+    // Keep browser active - position is fixed in CSS (left side of screen)
+    if (browser) {
+        browser.active = true;
     }
-    
-    // Update browser position - directly converts 3D to screen (no smoothing)
-    // Text will follow the vehicle as you move the camera
-    updateBrowserPosition(textWorldPos);
 });
 
 mp.events.add('playerEnterVehicle', (vehicle, seat) => {
